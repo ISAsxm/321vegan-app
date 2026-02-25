@@ -9,6 +9,9 @@ import 'services/auth_service.dart';
 import 'services/notification_service.dart';
 import 'services/products_of_interest_cache.dart';
 
+/// Global navigator key for showing dialogs from notification handlers
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
@@ -42,6 +45,7 @@ class MyApp extends StatelessWidget {
         data: MediaQuery.of(context)
             .copyWith(textScaler: const TextScaler.linear(1.0)),
         child: MaterialApp(
+          navigatorKey: navigatorKey,
           title: '321 Vegan',
           debugShowCheckedModeBanner: false,
           theme: ThemeData(

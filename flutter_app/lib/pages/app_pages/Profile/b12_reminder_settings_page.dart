@@ -43,6 +43,13 @@ class _B12ReminderSettingsPageState extends State<B12ReminderSettingsPage> {
     try {
       // Validate settings before saving
       if (_settings.enabled &&
+          _settings.frequency == ReminderFrequency.twiceWeekly &&
+          (_settings.daysOfWeek == null ||
+              _settings.daysOfWeek!.length != 2)) {
+        throw Exception(
+            'Veuillez sélectionner exactement 2 jours de la semaine');
+      }
+      if (_settings.enabled &&
           (_settings.frequency == ReminderFrequency.weekly ||
               _settings.frequency == ReminderFrequency.biweekly) &&
           _settings.dayOfWeek == null) {
@@ -457,9 +464,16 @@ class _B12ReminderSettingsPageState extends State<B12ReminderSettingsPage> {
               _buildFrequencySelector(),
               Divider(height: 48.h),
               _buildTimeSelector(),
-              if (_settings.frequency != ReminderFrequency.daily) ...[
+              if (_settings.frequency == ReminderFrequency.twiceWeekly) ...[
+                Divider(height: 48.h),
+                _buildMultiDaySelector(),
+              ] else if (_settings.frequency != ReminderFrequency.daily) ...[
                 Divider(height: 48.h),
                 _buildDaySelector(),
+              ],
+              if (_settings.frequency == ReminderFrequency.biweekly) ...[
+                Divider(height: 48.h),
+                _buildStartDateSelector(),
               ],
             ],
           ],
@@ -519,6 +533,12 @@ class _B12ReminderSettingsPageState extends State<B12ReminderSettingsPage> {
         ),
         SizedBox(height: 16.h),
         _buildFrequencyOption(
+          'Deux fois par semaine',
+          ReminderFrequency.twiceWeekly,
+          Icons.arrow_circle_right_outlined,
+        ),
+        SizedBox(height: 16.h),
+        _buildFrequencyOption(
           'Toutes les deux semaines',
           ReminderFrequency.biweekly,
           Icons.arrow_circle_right_outlined,
@@ -542,12 +562,19 @@ class _B12ReminderSettingsPageState extends State<B12ReminderSettingsPage> {
         child: InkWell(
           onTap: () {
             setState(() {
-              _settings = _settings.copyWith(
-                frequency: frequency,
-                dayOfWeek: frequency != ReminderFrequency.daily
-                    ? (_settings.dayOfWeek ?? 1)
-                    : null,
-              );
+              if (frequency == ReminderFrequency.twiceWeekly) {
+                _settings = _settings.copyWith(
+                  frequency: frequency,
+                  daysOfWeek: _settings.daysOfWeek ?? [1, 4],
+                );
+              } else {
+                _settings = _settings.copyWith(
+                  frequency: frequency,
+                  dayOfWeek: frequency != ReminderFrequency.daily
+                      ? (_settings.dayOfWeek ?? 1)
+                      : null,
+                );
+              }
             });
           },
           borderRadius: BorderRadius.circular(16.r),
@@ -727,6 +754,146 @@ class _B12ReminderSettingsPageState extends State<B12ReminderSettingsPage> {
       selectedColor: Theme.of(context).colorScheme.primary,
       checkmarkColor: Colors.white,
       padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+    );
+  }
+
+  Widget _buildMultiDaySelector() {
+    final selectedDays = _settings.daysOfWeek ?? [];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Jours de la semaine (2 jours)',
+          style: TextStyle(
+            fontSize: 44.sp,
+            fontWeight: FontWeight.w500,
+            color: Colors.grey[800],
+          ),
+        ),
+        SizedBox(height: 16.h),
+        Wrap(
+          spacing: 12.w,
+          runSpacing: 12.h,
+          children: [
+            _buildMultiDayChip('Lun', 1, selectedDays),
+            _buildMultiDayChip('Mar', 2, selectedDays),
+            _buildMultiDayChip('Mer', 3, selectedDays),
+            _buildMultiDayChip('Jeu', 4, selectedDays),
+            _buildMultiDayChip('Ven', 5, selectedDays),
+            _buildMultiDayChip('Sam', 6, selectedDays),
+            _buildMultiDayChip('Dim', 7, selectedDays),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMultiDayChip(String label, int day, List<int> selectedDays) {
+    final isSelected = selectedDays.contains(day);
+
+    return FilterChip(
+      label: Text(
+        label,
+        style: TextStyle(
+          fontSize: 40.sp,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          color: isSelected ? Colors.white : Colors.grey[800],
+        ),
+      ),
+      selected: isSelected,
+      onSelected: (selected) {
+        setState(() {
+          final days = List<int>.from(selectedDays);
+          if (selected) {
+            if (days.length < 2) {
+              days.add(day);
+            } else {
+              // Replace the oldest selection
+              days.removeAt(0);
+              days.add(day);
+            }
+          } else {
+            days.remove(day);
+          }
+          _settings = _settings.copyWith(daysOfWeek: days);
+        });
+      },
+      selectedColor: Theme.of(context).colorScheme.primary,
+      checkmarkColor: Colors.white,
+      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+    );
+  }
+
+  Future<void> _pickStartDate() async {
+    // Default to the next occurrence of the selected day of week
+    final now = DateTime.now();
+    final dayOfWeek = _settings.dayOfWeek ?? 1;
+    int daysUntil = (dayOfWeek - now.weekday) % 7;
+    if (daysUntil == 0) daysUntil = 7;
+    final defaultDate =
+        _settings.biweeklyStartDate ?? now.add(Duration(days: daysUntil));
+
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: defaultDate,
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 365)),
+      locale: const Locale('fr', 'FR'),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Theme.of(context).colorScheme.primary,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _settings = _settings.copyWith(
+          biweeklyStartDate: picked,
+          dayOfWeek: picked.weekday,
+        );
+      });
+    }
+  }
+
+  Widget _buildStartDateSelector() {
+    final formatter = DateFormat('EEEE d MMMM yyyy', 'fr_FR');
+    final startDateStr = _settings.biweeklyStartDate != null
+        ? formatter.format(_settings.biweeklyStartDate!)
+        : 'Non définie';
+
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      title: Text(
+        'Date de début',
+        style: TextStyle(
+          fontSize: 44.sp,
+          fontWeight: FontWeight.w500,
+          color: Colors.grey[800],
+        ),
+      ),
+      subtitle: Text(
+        startDateStr,
+        style: TextStyle(
+          fontSize: 42.sp,
+          fontWeight: FontWeight.bold,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+      ),
+      trailing: ElevatedButton.icon(
+        onPressed: _pickStartDate,
+        icon: Icon(Icons.calendar_today, size: 48.sp),
+        label: Text('Choisir', style: TextStyle(fontSize: 40.sp)),
+        style: ElevatedButton.styleFrom(
+          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
+        ),
+      ),
     );
   }
 
