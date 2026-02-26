@@ -18,6 +18,7 @@ import 'package:vegan_app/widgets/wave_clipper.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:vegan_app/services/auth_service.dart';
+import 'package:vegan_app/services/b12_reminder_service.dart';
 import 'package:vegan_app/services/badge_service.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -27,7 +28,8 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => MyHomePageState();
 }
 
-class MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
+class MyHomePageState extends State<MyHomePage>
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   DateTime? targetDate;
   late MotionTabBarController motionTabBarController;
   late Map<String, int> _savings;
@@ -41,6 +43,7 @@ class MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     initializeDateFormatting('fr_FR', null);
     _timer = Timer.periodic(
         const Duration(minutes: 1), (Timer t) => _updateSavings());
@@ -80,7 +83,15 @@ class MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      B12ReminderService.checkAndRescheduleIfNeeded();
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     motionTabBarController.dispose();
     _confettiController.dispose();
     _partnersAnimationController.dispose();
