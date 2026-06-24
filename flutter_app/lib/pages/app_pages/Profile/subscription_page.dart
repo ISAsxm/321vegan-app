@@ -48,6 +48,27 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
     return null;
   }
 
+  /// Reference price for a yearly plan (its monthly price × 12), to show struck
+  /// through next to the discounted yearly price. Matches the displayed
+  /// price exactly. Returns null if it can't be computed or there's no saving.
+  String? _yearlyReferencePrice(String monthlyId, String yearlyId) {
+    final monthly = SubscriptionService.getProduct(monthlyId);
+    final yearly = SubscriptionService.getProduct(yearlyId);
+    if (monthly == null || yearly == null || monthly.rawPrice <= 0) return null;
+    final reference = monthly.rawPrice * 12;
+    if (reference <= yearly.rawPrice) return null;
+
+    final priceStr = monthly.price;
+    final usesComma = RegExp(r',\d{1,2}(?:\D|$)').hasMatch(priceStr);
+    final number =
+        reference.toStringAsFixed(2).replaceAll('.', usesComma ? ',' : '.');
+    final symbol = priceStr.replaceAll(RegExp(r'[\d.,\s ]'), '').trim();
+    if (symbol.isEmpty) return number;
+    return priceStr.trimLeft().startsWith(symbol)
+        ? '$symbol$number'
+        : '$number $symbol';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -178,7 +199,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Soutenir 321 Vegan',
+          'Soutenir & débloquer',
           style: TextStyle(
             fontSize: 52.sp,
             fontWeight: FontWeight.bold,
@@ -212,9 +233,9 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
 
                   // Header illustration
                   if (!isSubscribed) ...[
-                    const SubscriptionGoalWidget(),
-                    SizedBox(height: 24.h),
                     _buildHeader(primaryColor),
+                    SizedBox(height: 24.h),
+                    const SubscriptionGoalWidget(),
                     SizedBox(height: 32.h),
 
                     // Benefits list
@@ -398,16 +419,17 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
     return Column(
       children: [
         Text(
-          'Débloquez les fonctionnalités !',
+          'Profitez pleinement de 321 Vegan',
           style: TextStyle(
             fontSize: 60.sp,
             fontWeight: FontWeight.bold,
             color: Colors.grey[800],
           ),
+          textAlign: TextAlign.center,
         ),
         SizedBox(height: 8.h),
         Text(
-          'Et aidez-nous à grandir et à rendre le véganisme facile pour encore plus de monde.',
+          'Débloquez la carte des produits, les scores illimités et tous les thèmes, et faites grandir le projet !',
           style: TextStyle(
             fontSize: 40.sp,
             color: Colors.grey[500],
@@ -422,14 +444,14 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
   Widget _buildBenefits(Color primaryColor) {
     final benefits = [
       (
+        'Carte des produits en accès anticipé',
+        'Trouvez où acheter les produits vegan près de vous',
+        Icons.map
+      ),
+      (
         'Nutriscore & Green-score illimités',
         'Les scores de tous vos produits scannés, sans limite',
         Icons.qr_code_scanner
-      ),
-      (
-        'Carte des produits en accès anticipé',
-        'Découvrez où trouver les produits vegan près de vous',
-        Icons.map
       ),
       (
         'Tous les thèmes débloqués',
@@ -643,6 +665,9 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
               price: product?.price,
               isPopular: t.isPopular,
               primaryColor: primaryColor,
+              referencePrice: _isYearly
+                  ? _yearlyReferencePrice(t.monthlyId, t.yearlyId)
+                  : null,
             ),
           );
         }),
@@ -657,6 +682,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
     required String? price,
     required bool isPopular,
     required Color primaryColor,
+    String? referencePrice,
   }) {
     final isSelected = _selectedTier == tier;
 
@@ -725,13 +751,32 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text(
-                      price ?? '...',
-                      style: TextStyle(
-                        fontSize: 50.sp,
-                        fontWeight: FontWeight.bold,
-                        color: isSelected ? primaryColor : Colors.grey[800],
-                      ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        if (referencePrice != null) ...[
+                          Text(
+                            referencePrice,
+                            style: TextStyle(
+                              fontSize: 36.sp,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey[500],
+                              decoration: TextDecoration.lineThrough,
+                              decorationColor: Colors.grey[500],
+                            ),
+                          ),
+                          SizedBox(width: 10.w),
+                        ],
+                        Text(
+                          price ?? '...',
+                          style: TextStyle(
+                            fontSize: 50.sp,
+                            fontWeight: FontWeight.bold,
+                            color: isSelected ? primaryColor : Colors.grey[800],
+                          ),
+                        ),
+                      ],
                     ),
                     Text(
                       _isYearly ? '/ an' : '/ mois',

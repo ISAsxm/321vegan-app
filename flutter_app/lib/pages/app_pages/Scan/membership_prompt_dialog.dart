@@ -73,7 +73,7 @@ class _MembershipPromptDialogState extends State<MembershipPromptDialog> {
                       ),
                       SizedBox(height: 12.h),
                       Text(
-                        'Soutenez 321 Vegan !',
+                        'Vous scannez souvent !',
                         style: TextStyle(
                           fontSize: 48.sp,
                           fontWeight: FontWeight.bold,
@@ -83,7 +83,7 @@ class _MembershipPromptDialogState extends State<MembershipPromptDialog> {
                       ),
                       SizedBox(height: 12.h),
                       Text(
-                        'Vous aimez l\'application ? Aidez-nous à la maintenir et à l\'améliorer en devenant membre !',
+                        'Débloquez les Nutri & Eco-scores en illimité et la carte des produits vegan près de vous, tout en soutenant le projet !',
                         style: TextStyle(
                           fontSize: 36.sp,
                           color: Colors.grey[600],
@@ -106,7 +106,7 @@ class _MembershipPromptDialogState extends State<MembershipPromptDialog> {
                           ),
                         ),
                         child: Text(
-                          'Soutenir ❤️',
+                          'Débloquer ❤️',
                           style: TextStyle(
                             fontSize: 40.sp,
                             fontWeight: FontWeight.bold,

@@ -125,7 +125,7 @@ class _MapAccessOverlayState extends State<MapAccessOverlay> {
                       ),
                       SizedBox(height: 24.h),
                       Text(
-                         'Accès anticipé pour les abonné·es',
+                         'Trouvez les produits vegan près de vous',
                         style: TextStyle(
                           fontSize: 52.sp,
                           fontWeight: FontWeight.bold,
@@ -136,8 +136,8 @@ class _MapAccessOverlayState extends State<MapAccessOverlay> {
                       SizedBox(height: 12.h),
                       Text(
                         isLoggedIn
-                            ? 'La carte des produits est en accès anticipé, réservée pour le moment aux abonné·es'
-                            : 'Vous devez commencer par créer un compte pour vous abonner et accéder à la carte.',
+                            ? 'Localisez les produits vegan autour de vous. En accès anticipé pour les abonné·es, et vous soutenez le projet !'
+                            : 'Créez un compte pour débloquer la carte et localiser les produits vegan autour de vous.',
                         style: TextStyle(
                           fontSize: 40.sp,
                           color: Colors.grey[500],

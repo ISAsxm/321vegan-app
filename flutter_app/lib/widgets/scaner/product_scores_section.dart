@@ -287,7 +287,7 @@ class _ProductScoresSectionState extends State<ProductScoresSection> {
                   ),
                   SizedBox(height: 4.h),
                   Text(
-                    'Abonnez-vous pour des scores en illimité',
+                    'Passez en illimité pour voir tous les scores',
                     style: TextStyle(
                       fontSize: 32.sp,
                       color: Colors.grey[600],
